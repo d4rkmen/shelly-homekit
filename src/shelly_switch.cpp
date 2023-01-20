@@ -370,8 +370,8 @@ void ShellySwitch::AddPowerMeter(uint16_t *iid) {
   // Power
   power_char_ = new mgos::hap::FloatCharacteristic(
       (*iid)++, &kHAPCharacteristic_EveConsumption, 0.0f, 65535.0f, 0.1f,
-      [this](HAPAccessoryServerRef *,
-             const HAPFloatCharacteristicReadRequest *, float *value) {
+      [this](HAPAccessoryServerRef *, const HAPFloatCharacteristicReadRequest *,
+             float *value) {
         auto power = out_pm_->GetPowerW();
         if (!power.ok()) return kHAPError_Busy;
         *value = power.ValueOrDie();
@@ -382,8 +382,8 @@ void ShellySwitch::AddPowerMeter(uint16_t *iid) {
   // Energy
   total_power_char_ = new mgos::hap::FloatCharacteristic(
       (*iid)++, &kHAPCharacteristic_EveTotalConsumption, 0.0f, 65535.0f, 0.1f,
-      [this](HAPAccessoryServerRef *,
-             const HAPFloatCharacteristicReadRequest *, float *value) {
+      [this](HAPAccessoryServerRef *, const HAPFloatCharacteristicReadRequest *,
+             float *value) {
         auto energy = out_pm_->GetEnergyWH();
         if (!energy.ok()) return kHAPError_Busy;
         *value = energy.ValueOrDie();
