@@ -266,7 +266,7 @@ void GarageDoorOpener::ToggleState(const char *source) {
       break;
     case State::kOpening:
       SetTgtState(new_state, source);
-      SetCurState(State::kStopped);
+      SetCurState(State::kClosing);
       break;
     case State::kClosing:
       SetTgtState(State::kOpen, source);
