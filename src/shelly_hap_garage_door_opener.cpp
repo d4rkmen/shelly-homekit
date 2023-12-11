@@ -96,12 +96,13 @@ Status GarageDoorOpener::Init() {
       kHAPCharacteristicDebugDescription_ObstructionDetected);
   AddChar(obst_char_);
   bool in_close_act_state = (cfg_->close_sensor_mode == 0);
-  cur_state_ = ((in_close_->GetState() == in_close_act_state) ? State::kClosed
-                                                              : State::kOpen);
-  tgt_state_ = cur_state_;
+  State actual_state = (in_close_->GetState() == in_close_act_state)
+                           ? State::kClosed
+                           : State::kOpen;
+  SetCurState(actual_state);
+  SetTgtState(actual_state, "init");
   LOG(LL_INFO, ("GDO %d: cur_state %d", id(), (int) cur_state_));
   state_timer_.Reset(100, MGOS_TIMER_REPEAT);
-  RunOnce();
   return Status::OK();
 }
 
