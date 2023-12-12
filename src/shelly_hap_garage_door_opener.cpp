@@ -100,7 +100,7 @@ Status GarageDoorOpener::Init() {
                                                               : State::kOpen);
   tgt_state_ = cur_state_;
   LOG(LL_INFO, ("GDO %d: cur_state %d", id(), (int) cur_state_));
-  state_timer_.Reset(100, MGOS_TIMER_REPEAT);
+  state_timer_.Reset(100, MGOS_TIMER_REPEAT | MGOS_TIMER_RUN_NOW);
   return Status::OK();
 }
 
@@ -320,7 +320,7 @@ void GarageDoorOpener::SetTgtState(State new_state, const char *src) {
 void GarageDoorOpener::RunOnce() {
   int is_closed, is_open;
   GetInputsState(&is_closed, &is_open);
-  LOG(LL_DEBUG,
+  LOG(LL_INFO,
       ("GDO %d: cur %s tgt %s is_closed %d is_open %d", id(),
        StateStr(cur_state_), StateStr(tgt_state_), is_closed, is_open));
   if (cur_state_ != State::kStopped && is_closed && is_open == 1) {
