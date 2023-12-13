@@ -104,9 +104,9 @@ Status GarageDoorOpener::Init() {
       kHAPCharacteristicDebugDescription_ObstructionDetected);
   AddChar(obst_char_);
   cur_state_ =
-      ((cfg_->close_sensor_mode == 2) && (cfg_->open_sensor_mode == 2) ||
-       (cfg_->close_sensor_mode != 2) || in_close_->GetState() ||
-       (cfg_->open_sensor_mode != 2) && !in_open_->GetState())
+      (((cfg_->close_sensor_mode == 2) && (cfg_->open_sensor_mode == 2)) ||
+       ((cfg_->close_sensor_mode != 2) || in_close_->GetState()) ||
+       ((cfg_->open_sensor_mode != 2) && !in_open_->GetState()))
           ? State::kClosed
           : State::kOpen;
   tgt_state_ = cur_state_;
@@ -325,16 +325,14 @@ void GarageDoorOpener::SetTgtState(State new_state, const char *src) {
   tgt_state_char_->RaiseEvent();
 }
 
-void GarageDoorOpener::InCloseChange() {
-  int is_closed, is_open;
-  GetInputsState(&is_closed, &is_open);
-  LOG(LL_INFO, ("GDO %d: is_closed >> %d", id(), is_closed));
+void GarageDoorOpener::InCloseChange(Event ev, bool state) {
+  LOG(LL_INFO, ("GDO %d: {%s} is_closed >> %d", id(), (int) ev,
+                state ? "true" : "false"));
 }
 
-void GarageDoorOpener::InCloseChange() {
-  int is_closed, is_open;
-  GetInputsState(&is_closed, &is_open);
-  LOG(LL_INFO, ("GDO %d: is_opened >> %d", id(), is_opened));
+void GarageDoorOpener::InOpenChange(Event ev, bool state) {
+  LOG(LL_INFO, ("GDO %d: {%d} is_opened >> %s", id(), (int) ev,
+                state ? "true" : "false"));
 }
 
 void GarageDoorOpener::RunOnce() {
