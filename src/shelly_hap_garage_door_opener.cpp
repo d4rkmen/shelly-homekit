@@ -41,11 +41,13 @@ GarageDoorOpener::GarageDoorOpener(int id, Input *in_close, Input *in_open,
   out_open_->SetState(false, "ctor");
   if (in_close_ != nullptr) {
     in_close_->SetInvert(cfg_->close_sensor_mode == 1);
-    in_close_->AddHandler(std::bind(&GarageDoorOpener::InCloseChange, this));
+    in_close_->AddHandler(
+        std::bind(&GarageDoorOpener::InCloseChange, this, _1, _2));
   }
   if (in_open_ != nullptr) {
     in_open_->SetInvert(cfg_->open_sensor_mode == 1);
-    in_open_->AddHandler(std::bind(&GarageDoorOpener::InOpenChange, this));
+    in_open_->AddHandler(
+        std::bind(&GarageDoorOpener::InOpenChange, this, _1, _2));
   }
 }
 
@@ -325,12 +327,12 @@ void GarageDoorOpener::SetTgtState(State new_state, const char *src) {
   tgt_state_char_->RaiseEvent();
 }
 
-void GarageDoorOpener::InCloseChange(Event ev, bool state) {
+void GarageDoorOpener::InCloseChange(Input::Event ev, bool state) {
   LOG(LL_INFO, ("GDO %d: {%s} is_closed >> %d", id(), (int) ev,
                 state ? "true" : "false"));
 }
 
-void GarageDoorOpener::InOpenChange(Event ev, bool state) {
+void GarageDoorOpener::InOpenChange(Input::Event ev, bool state) {
   LOG(LL_INFO, ("GDO %d: {%d} is_opened >> %s", id(), (int) ev,
                 state ? "true" : "false"));
 }
