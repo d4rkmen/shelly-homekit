@@ -328,7 +328,7 @@ void GarageDoorOpener::SetTgtState(State new_state, const char *src) {
 }
 
 void GarageDoorOpener::InCloseChange(Input::Event ev, bool state) {
-  LOG(LL_INFO, ("GDO %d: {%d} is_closed >> %d", id(), (int) ev,
+  LOG(LL_INFO, ("GDO %d: {%d} is_closed >> %s", id(), (int) ev,
                 state ? "true" : "false"));
 }
 
