@@ -58,10 +58,7 @@ bool InputPin::ReadPin() {
 }
 
 bool InputPin::GetState() {
-  LOG(LL_INFO, ("Input %d: pin %d, on_value %d, pull %d, invert %d", id(),
-                cfg_.pin, cfg_.on_value, cfg_.pull, invert_));
   last_state_ = (ReadPin() == cfg_.on_value) ^ invert_;
-  LOG(LL_INFO, ("Input %d: state %d", id(), last_state_));
   return last_state_;
 }
 

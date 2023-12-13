@@ -39,6 +39,14 @@ GarageDoorOpener::GarageDoorOpener(int id, Input *in_close, Input *in_open,
       state_timer_(std::bind(&GarageDoorOpener::RunOnce, this)) {
   out_close_->SetState(false, "ctor");
   out_open_->SetState(false, "ctor");
+  if (in_close_ != nullptr) {
+    in_close_->SetInvert(cfg_->close_sensor_mode == 1);
+    in_close_->AddHandler(std::bind(&GarageDoorOpener::InCloseChange, this));
+  }
+  if (in_open_ != nullptr) {
+    in_open_->SetInvert(cfg_->open_sensor_mode == 1);
+    in_open_->AddHandler(std::bind(&GarageDoorOpener::InOpenChange, this));
+  }
 }
 
 GarageDoorOpener::~GarageDoorOpener() {
@@ -95,12 +103,15 @@ Status GarageDoorOpener::Init() {
       true /* supports_notification */, nullptr /* write_handler */,
       kHAPCharacteristicDebugDescription_ObstructionDetected);
   AddChar(obst_char_);
-  bool in_close_act_state = (cfg_->close_sensor_mode == 0);
-  cur_state_ = ((in_close_->GetState() == in_close_act_state) ? State::kClosed
-                                                              : State::kOpen);
+  cur_state_ =
+      ((cfg_->close_sensor_mode == 2) && (cfg_->open_sensor_mode == 2) ||
+       (cfg_->close_sensor_mode != 2) || in_close_->GetState() ||
+       (cfg_->open_sensor_mode != 2) && !in_open_->GetState())
+          ? State::kClosed
+          : State::kOpen;
   tgt_state_ = cur_state_;
   LOG(LL_INFO, ("GDO %d: cur_state %d", id(), (int) cur_state_));
-  state_timer_.Reset(100, MGOS_TIMER_REPEAT | MGOS_TIMER_RUN_NOW);
+  state_timer_.Reset(100, MGOS_TIMER_REPEAT);
   return Status::OK();
 }
 
@@ -208,15 +219,12 @@ const char *GarageDoorOpener::StateStr(State state) {
 }
 
 void GarageDoorOpener::GetInputsState(int *is_closed, int *is_open) const {
-  bool in_close_act_state = (cfg_->close_sensor_mode == 0);
-  *is_closed = (in_close_->GetState() == in_close_act_state);
-  if (in_open_ != nullptr &&
-      (cfg_->open_sensor_mode == 0 || cfg_->open_sensor_mode == 1)) {
-    bool in_open_act_state = (cfg_->open_sensor_mode == 0);
-    *is_open = (in_open_->GetState() == in_open_act_state);
-  } else {
-    *is_open = -1;
-  }
+  *is_closed = (in_close_ == nullptr) || (cfg_->close_sensor_mode == 2)
+                   ? -1
+                   : in_close_->GetState();
+  *is_open = (in_open_ == nullptr) || (cfg_->open_sensor_mode == 2)
+                 ? -1
+                 : in_open_->GetState();
 }
 
 void GarageDoorOpener::SetCurState(State new_state) {
@@ -317,6 +325,18 @@ void GarageDoorOpener::SetTgtState(State new_state, const char *src) {
   tgt_state_char_->RaiseEvent();
 }
 
+void GarageDoorOpener::InCloseChange() {
+  int is_closed, is_open;
+  GetInputsState(&is_closed, &is_open);
+  LOG(LL_INFO, ("GDO %d: is_closed >> %d", id(), is_closed));
+}
+
+void GarageDoorOpener::InCloseChange() {
+  int is_closed, is_open;
+  GetInputsState(&is_closed, &is_open);
+  LOG(LL_INFO, ("GDO %d: is_opened >> %d", id(), is_opened));
+}
+
 void GarageDoorOpener::RunOnce() {
   int is_closed, is_open;
   GetInputsState(&is_closed, &is_open);
@@ -365,22 +385,29 @@ void GarageDoorOpener::RunOnce() {
           break;
         }
       }
-      if (is_closed && elapsed_ms > cfg_->begin_move_time_ms) {
+      if (is_closed == 1 && elapsed_ms > cfg_->begin_move_time_ms) {
         SetTgtState(State::kClosed, "ext");
         SetCurState(State::kClosed);
       }
       break;
     }
     case State::kClosing: {
-      if (is_closed) {
-        SetCurState(State::kClosed);
-        break;
-      }
       int64_t elapsed_ms = (mgos_uptime_micros() - begin_) / 1000;
-      if (elapsed_ms > cfg_->move_time_ms) {
-        obstruction_detected_ = true;
-        SetCurState(State::kStopped);
-        break;
+      if (is_closed != -1) {
+        if (is_closed) {
+          SetCurState(State::kClosed);
+          break;
+        }
+        if (elapsed_ms > cfg_->move_time_ms) {
+          obstruction_detected_ = true;
+          SetCurState(State::kStopped);
+          break;
+        }
+      } else {
+        if (elapsed_ms > cfg_->move_time_ms) {
+          SetCurState(State::kClosed);
+          break;
+        }
       }
       if (is_open == 1 && elapsed_ms > cfg_->begin_move_time_ms) {
         SetTgtState(State::kOpen, "ext");
@@ -392,7 +419,7 @@ void GarageDoorOpener::RunOnce() {
       if (is_closed && is_open == 1) {
         break;
       }
-      if (is_closed) {
+      if (is_closed == 1) {
         SetTgtState(State::kClosed, "ext");
         SetCurState(State::kClosed);
         break;
