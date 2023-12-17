@@ -72,8 +72,6 @@ class GarageDoorOpener : public Component, public mgos::hap::Service {
                             uint8_t value);
 
   void RunOnce();
-  void InCloseChange(Input::Event ev, bool state);
-  void InOpenChange(Input::Event ev, bool state);
 
   Input *in_close_, *in_open_;
   Output *out_close_, *out_open_;

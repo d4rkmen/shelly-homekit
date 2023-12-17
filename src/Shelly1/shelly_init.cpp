@@ -34,7 +34,7 @@ void CreatePeripherals(std::vector<std::unique_ptr<Input>> *inputs,
                        std::vector<std::unique_ptr<PowerMeter>> *pms UNUSED_ARG,
                        std::unique_ptr<TempSensor> *sys_temp UNUSED_ARG) {
   outputs->emplace_back(new OutputPin(1, 4, 1));
-  auto *in = new InputPin(1, 5, 1, MGOS_GPIO_PULL_NONE, true);
+  auto *in = new InputPin(1, 5, 1, MGOS_GPIO_PULL_DOWN, true);
   in->AddHandler(std::bind(&HandleInputResetSequence, in, 4, _1, _2));
   in->Init();
   inputs->emplace_back(in);

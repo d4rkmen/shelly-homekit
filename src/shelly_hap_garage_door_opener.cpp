@@ -41,13 +41,9 @@ GarageDoorOpener::GarageDoorOpener(int id, Input *in_close, Input *in_open,
   out_open_->SetState(false, "ctor");
   if (in_close_ != nullptr) {
     in_close_->SetInvert(cfg_->close_sensor_mode == 1);
-    in_close_->AddHandler(
-        std::bind(&GarageDoorOpener::InCloseChange, this, _1, _2));
   }
   if (in_open_ != nullptr) {
     in_open_->SetInvert(cfg_->open_sensor_mode == 1);
-    in_open_->AddHandler(
-        std::bind(&GarageDoorOpener::InOpenChange, this, _1, _2));
   }
 }
 
@@ -153,7 +149,7 @@ Status GarageDoorOpener::SetConfig(const std::string &config_json,
     return mgos::Errorf(STATUS_INVALID_ARGUMENT, "invalid %s",
                         "name (too long, max 64)");
   }
-  if (close_sensor_mode > 1) {
+  if (close_sensor_mode > 2) {
     return mgos::Errorf(STATUS_INVALID_ARGUMENT, "invalid %s",
                         "close_sensor_mode");
   }
@@ -340,7 +336,7 @@ void GarageDoorOpener::InOpenChange(Input::Event ev, bool state) {
 void GarageDoorOpener::RunOnce() {
   int is_closed, is_open;
   GetInputsState(&is_closed, &is_open);
-  LOG(LL_INFO,
+  LOG(LL_DEBUG,
       ("GDO %d: cur %s tgt %s is_closed %d is_open %d", id(),
        StateStr(cur_state_), StateStr(tgt_state_), is_closed, is_open));
   if (cur_state_ != State::kStopped && is_closed && is_open == 1) {
